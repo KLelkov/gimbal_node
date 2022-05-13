@@ -104,10 +104,10 @@ void setPitch(float value)
 // dont forget to add current heading angle
 void setHeading(float value)
 {
-  if (value > 120)
-    value = 120;
-  if (value < -120)
-    value = -120;
+  if (value > 90)
+    value = 90;
+  if (value < -90)
+    value = -90;
   int pwm = fmap(value, -90, 90, 34, 150);
   servoHeading.write(pwm);
 }
