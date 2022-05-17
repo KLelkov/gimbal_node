@@ -1,78 +1,79 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
-#import getch
-import math
-import time
+from math import pi, cos, sin, atan2, sqrt
 import serial # used to exchange data with arduino controller
 from rdk_msgs.msg import navigation
-from rdk_msgs.msg import smart_target
-
-# Expected trajectory:
-# num: x, y -> camera heading
-# 1: 0, 0 -> 90
-# 2: 4, 0 -> 90
-# 3: 4, 4 -> 45
-# 4: 8, 8 -> 0
-# 5: 8, 12 -> -45
-# 6: 4, 16 -> -90
-# 7: 0, 16 -> -90
-
-ser = serial.Serial(
-	port='/dev/ttyACM1',
-	baudrate = 115200,
-	parity = serial.PARITY_NONE,
-	stopbits = serial.STOPBITS_ONE,
-	bytesize = serial.EIGHTBITS,
-	timeout = 0.1 )
+from rdk_msgs.msg import target
 
 
-waypointsCounter = 0
-currentTarget = smart_target()
-X = 0
-Y = 0
-Heading = 0
+class SubscribeAndPublish:
 
-def navigation_callback(data):
-	global X, Y, Heading
-	X = data.X
-	Y = data.Y
-	Heading = data.heading
+    def __init__(self):
+        self.X = 0
+        self.Y = 0
+        self.Xpoi = 200
+        self.Zpoi = 0
+        self.Heading = 0
 
+		self.ser = serial.Serial(
+			port='/dev/gimbal',
+			baudrate = 115200,
+			parity = serial.PARITY_NONE,
+			stopbits = serial.STOPBITS_ONE,
+			bytesize = serial.EIGHTBITS,
+			timeout = 0.1 )
 
-def target_callback(data):
-    global currentTarget, waypointsCounter, ser
-    if (currentTarget.X != data.X) and (currentTarget.Y != data.Y):
-        waypointsCounter = waypointsCounter + 1
-		print ("Switched path to: {} {}".format(data.X, data.Y))
-	    currentTarget = data
-        if (currentTarget.X == 0) and (currentTarget.Y == 0):
-            ser.write("campos {} {} \n".format(-45, -40).encode())
-        if (currentTarget.X == 8) and (currentTarget.Y == 0):
-            ser.write("campos {} {} \n".format(45, -40).encode())
-        if (currentTarget.X == 4) and (currentTarget.Y == 4):
-            ser.write("campos {} {} \n".format(90, -40).encode())
-        if (currentTarget.X == 8) and (currentTarget.Y == 8):
-            ser.write("campos {} {} \n".format(45, -40).encode())
-        if (currentTarget.X == 8) and (currentTarget.Y == 12):
-            ser.write("campos {} {} \n".format(0, -40).encode())
-        if (currentTarget.X == 4) and (currentTarget.Y == 16):
-            ser.write("campos {} {} \n".format(-45, -40).encode())
-        if (currentTarget.X == 0) and (currentTarget.Y == 16):
-            ser.write("campos {} {} \n".format(-90, -40).encode())
+        self.navPub = rospy.Subscriber('navigation_data', navigation, self.navigation_callback)
+        self.tarPub = rospy.Subscriber('target_data', target, self.target_callback)
+
+        rospy.loginfo("Automatic gimbal control is ready!")
+    # End of __init__()
 
 
-def publisher():
-    rospy.init_node('auto_gimbal', anonymous=True)
-    rospy.Subscriber('navigation_data', navigation, navigation_callback)
-    rospy.Subscriber('target_data', smart_target, target_callback)
-    rate = rospy.Rate(10)
-    print("Gimbal auto control node is running...")
+	def bound(self, value, mi, ma):
+		upper = max([mi, value])
+		lower = min([upper, ma])
+		return lower
 
-    # Create an infinite loop until shutdown signal is received
-    ros.spin() # Use ros.spin() when your node doesn't do anything outside of its callbacks
+    def navigation_callback(self, msg):
+        self.X = msg.X
+        self.Y = msg.Y
+        self.Heading = msg.heading
 
-    # rospy.Rate.sleep()
+    def target_callback(self, msg):
+        self.Xpoi = msg.Xpoi
+        self.Ypoi = msg.Ypoi
 
-if __name__ == '__main__':
-	publisher()
+    def generate_controls(self):
+		peleng = atan2(self.Ypoi - self.Y, self.Xpoi - self.X)
+		gimbal_heading = round((peleng - self.Heading) * 180.0 / pi)
+		distance = sqrt((self.Ypoi - self.Y)**2 + (self.Xpoi - self.X)**2)
+		optimal_distance = 5  # meters
+		gimbal_pitch = round((distance - optimal_distance) * 5)
+		gimbal_heading = self.bound(gimbal_heading, -90, 90)
+		gimbal_pitch = self.bound(gimbal_pitch, -40, 20)
+		ser.flush()
+		ser.write("campos {} {} \n".format(gimbal_heading, gimbal_pitch).encode())
+		rospy.loginfo("Sent [campos {} {}]".format(gimbal_heading, gimbal_pitch))
+    # End of generate_controls()
+
+# End of SAP class
+
+
+def main():
+    rospy.init_node('auto_gimbal_node')
+    SAP = SubscribeAndPublish()
+
+    rate = rospy.get_param("~rate", 0.2)
+    r = rospy.Rate(rate)  # Hz
+    while not rospy.is_shutdown():
+        # Main cycle
+        SAP.generate_controls()
+        r.sleep()
+	rospy.loginfo("[auto_gimbal_node] Closing...")
+# End on main()
+
+
+if __name__ == "__main__":
+    main()
