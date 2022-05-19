@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 #import getch
@@ -18,7 +18,7 @@ def is_digit(n):
         return  False
 
 ser = serial.Serial(
-	port='/dev/gimbal',
+	port='/dev/ttyUSB0',
 	baudrate = 115200,
 	parity = serial.PARITY_NONE,
 	stopbits = serial.STOPBITS_ONE,
@@ -54,7 +54,8 @@ def publisher():
 
     while not rospy.is_shutdown():
         print("")
-        something = raw_input()
+        #something = raw_input()
+        something = input()
         if something.upper() == "Q":
             print("Closing this node shortly...")
             break
@@ -72,7 +73,7 @@ def publisher():
                 print("Set pitch to: {}".format(int(parts[1])))
                 pitch_ctrl = int(parts[1])
             ser.write("campos {} {} \n".format(heading_ctrl, pitch_ctrl).encode())
-            print("campos {} {} \n".format(heading_ctrl, pitch_ctrl).encode())
+            #print("campos {} {} \n".format(heading_ctrl, pitch_ctrl).encode())
             #print(parts)
         #print(something)
         #k=ord(getch.getch())
@@ -81,6 +82,7 @@ def publisher():
         #if (k>=0):
         #    rospy.loginfo(str(k))# to print on  terminal
         #    pub.publish(k)#to publish
+    ser.close()
 
 
 if __name__ == '__main__':
