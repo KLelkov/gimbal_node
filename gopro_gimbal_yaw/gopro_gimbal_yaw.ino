@@ -43,25 +43,33 @@ void loop() {
     {
       strncpy(packetID, inData, 6); // copy first 6 chars to packetID array
       packetID[6] = '\0'; // and add EOL symbol to it
-      if (strcmp(packetID, "campos") == 0) // check if packedID matched camera position message
+      char MSG[7] = {'\0'};
+      int heading = 0, pitch = 0;
+      sscanf(inData, "%s %d %d", MSG, &heading, &pitch);
+      //Serial.println(MSG);
+      //Serial.println(heading);
+      //Serial.println(pitch);
+      MSG[6] = '\0'; // and add EOL symbol to it
+      if (strcmp(MSG, "campos") == 0) // check if packedID matched camera position message
       {
-        // The message should be [campos heading pitch] (for example [campos 30 -19]). Now we need to extract the numeric values from the string
-        char * pch;
-        char buf[64];
-        pch = strtok(inData, " ");
-        strcpy(buf, pch); // copy it
-        int cnt = 0;
-        int heading = 0;
-        int pitch = 0;
-        while (pch != NULL)
-        {
-          if (cnt == 1)
-            heading = atoi(pch);
-          if (cnt == 2)
-            pitch = atoi(pch);
-          pch = strtok(NULL, " "); // this continues where the previous call left off
-          cnt++;
-        }
+//        // The message should be [campos heading pitch] (for example [campos 30 -19]). Now we need to extract the numeric values from the string
+//        char * pch;
+//        char buf[64];
+//        pch = strtok(inData, " ");
+//        strcpy(buf, pch); // copy it
+//        int cnt = 0;
+//        int heading = 0;
+//        int pitch = 0;
+//        while (pch != NULL)
+//        {
+//          if (cnt == 1)
+//            heading = atoi(pch);
+//          if (cnt == 2)
+//            pitch = atoi(pch);
+//          pch = strtok(NULL, " "); // this continues where the previous call left off
+//          cnt++;
+//        }
+      
         Serial.print("New position ");
         Serial.print(heading);
         Serial.print(" ");
