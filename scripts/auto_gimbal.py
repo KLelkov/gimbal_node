@@ -72,10 +72,10 @@ def main():
         # Main cycle
         SAP.generate_controls()
         r.sleep()
-        try:
-            code, msg, val = m.getSystemState(caller_id)
-        except:
-            break
+        #try:
+        #    code, msg, val = m.getSystemState(caller_id)
+        #except:
+        #    break
     rospy.loginfo("[auto_gimbal_node] Closing...")
     SAP.ser.close()
 # End on main()
