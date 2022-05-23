@@ -122,5 +122,7 @@ include_directories(
 )
 
 add_executable(auto_gimbal src/auto_gimbal.cpp src/CppSerial.cpp)
-
 target_link_libraries(auto_gimbal ${catkin_LIBRARIES})
+
+#add_executable(test src/test.cpp src/SerialStream.h)
+#target_link_libraries(test ${catkin_LIBRARIES})

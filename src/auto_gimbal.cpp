@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include <cstring>
 #include <iostream>
 #include <rdk_msgs/navigation.h>
 #include <rdk_msgs/target.h>
 #include "CppSerial.cpp"
 #include <ros/master.h>
+#include <sstream>
 
 
 class SubscribeAndPublish
@@ -50,7 +52,8 @@ public:
 
       for(int j = 0; j < le; j++)
       {
-        bytearray[j] = static_cast<unsigned char>(dataset[j]);
+        bytearray[j] = (dataset[j] < 0)?(dataset[j] + 256):dataset[j];
+        //bytearray[j] = static_cast<unsigned char>(dataset[j]);
       }
       return 0;
     }
@@ -85,13 +88,11 @@ public:
       memset(MSG, 0, sizeof(MSG));
       sprintf(MSG, "campos %d %d \n", gimbal_heading, gimbal_pitch);
 
-      // TODO: find a secure way to build (unsigned char) string instead
-      // of converting a (char) one.
       ser.FlushTransmit();
       //ser.Send((unsigned char*)MSG, sizeof(MSG));
-      ROS_INFO("Sent: %s\n", MSG);
-      ser.SendSigned(MSG, sizeof(MSG));
-      //std::cout << "Sent: " << MSG << std::endl;
+      std::string das = std::string(MSG);
+      ROS_INFO("Sent: %s\n", das.c_str());
+      ser.SendString(das);
     }
 
 
