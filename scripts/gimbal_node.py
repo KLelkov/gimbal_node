@@ -18,7 +18,7 @@ def is_digit(n):
         return  False
 
 ser = serial.Serial(
-	port='/dev/ttyUSB0',
+	port='/dev/gimbal',
 	baudrate = 115200,
 	parity = serial.PARITY_NONE,
 	stopbits = serial.STOPBITS_ONE,

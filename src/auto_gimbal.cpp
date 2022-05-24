@@ -31,7 +31,7 @@ private:
 public:
     SubscribeAndPublish() // This is the constructor
     {
-      char portname[] = "/dev/ttyUSB0";
+      char portname[] = "/dev/gimbal";
       ser.Open(portname, 115200);
 
       targetSub = nh.subscribe<rdk_msgs::target>("target_data", 5, &SubscribeAndPublish::target_callback, this);
