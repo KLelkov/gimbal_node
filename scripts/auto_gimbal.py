@@ -15,7 +15,7 @@ class SubscribeAndPublish:
         self.Xpoi = 200
         self.Ypoi = 0
         self.Heading = 0
-        self.heading_offset = 20
+        self.heading_offset = 15
         self.ser = serial.Serial()
         try:
             self.ser = serial.Serial(

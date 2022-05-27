@@ -29,6 +29,8 @@ ser = serial.Serial(
 heading_ctrl = 0
 pitch_ctrl = 0
 
+static_offset = 15
+
 pi = 3.141592653589793
 X = 0
 Y = 0
@@ -68,7 +70,7 @@ def publisher():
         if len(parts) == 2:
             if is_digit(parts[0]):
                 print("Set heading to: {}".format(int(parts[0])))
-                heading_ctrl = int(parts[0])
+                heading_ctrl = int(parts[0]) - static_offset
             if is_digit(parts[1]):
                 print("Set pitch to: {}".format(int(parts[1])))
                 pitch_ctrl = int(parts[1])
