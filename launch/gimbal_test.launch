@@ -9,7 +9,7 @@
   </node>
     <node name="tester" pkg="navigation_node" type="tester_nav.py" >
     <param name="file"  type="string" value="/home/jetracer/catkin_4w/src/sensors_rtk.csv" />
-    <param name="rate" value="1000" />
+    <param name="rate" value="300" />
   </node>
 
 <node name="path_node" pkg="path_control" type="path_node.py" output="screen">

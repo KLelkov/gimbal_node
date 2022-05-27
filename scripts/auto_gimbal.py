@@ -15,14 +15,19 @@ class SubscribeAndPublish:
         self.Xpoi = 200
         self.Ypoi = 0
         self.Heading = 0
-
-        self.ser = serial.Serial(
-            port='/dev/gimbal',
-            baudrate = 115200,
-            parity = serial.PARITY_NONE,
-            stopbits = serial.STOPBITS_ONE,
-            bytesize = serial.EIGHTBITS,
-            timeout = 0.1 )
+        self.heading_offset = 20
+        self.ser = serial.Serial()
+        try:
+            self.ser = serial.Serial(
+                port='/dev/gimbal',
+                baudrate = 115200,
+                parity = serial.PARITY_NONE,
+                stopbits = serial.STOPBITS_ONE,
+                bytesize = serial.EIGHTBITS,
+                timeout = 0.1 )
+        except:
+            rospy.logerr("[auto_gimbal] COM port error! Closing...")
+            rospy.signal_shutdown("[auto_gimbal] COM port error!")
 
         self.navPub = rospy.Subscriber('navigation_data', navigation, self.navigation_callback)
         self.tarPub = rospy.Subscriber('target_data', target, self.target_callback)
@@ -30,6 +35,10 @@ class SubscribeAndPublish:
         rospy.loginfo("Automatic gimbal control is ready!")
     # End of __init__()
 
+    def pi2pi(self, angle):
+        while abs(angle) > 180:
+            angle = angle - 360 * angle / abs(angle)
+        return angle
 
     def bound(self, value, mi, ma):
         upper = max([mi, value])
@@ -47,11 +56,14 @@ class SubscribeAndPublish:
 
     def generate_controls(self):
         peleng = atan2(self.Ypoi - self.Y, self.Xpoi - self.X)
-        gimbal_heading = round((peleng - self.Heading) * 180.0 / pi)
+        gimbal_heading = round((peleng - self.Heading) * 180.0 / pi) - self.heading_offset
+        gimbal_heading = self.pi2pi(gimbal_heading)
         distance = sqrt((self.Ypoi - self.Y)**2 + (self.Xpoi - self.X)**2)
-        optimal_distance = 5  # meters
+        optimal_distance = 7  # meters
         gimbal_pitch = -round((distance - optimal_distance) * 3)
-        gimbal_heading = self.bound(gimbal_heading, -100, 100)
+        rospy.loginfo("Debug: distance: {:.1f}".format(distance - optimal_distance))
+        rospy.loginfo("Debug: g_pit: {:.1f}".format(gimbal_pitch))
+        gimbal_heading = self.bound(gimbal_heading, -110, 110)
         gimbal_heading = int(gimbal_heading / 2)
         gimbal_pitch = self.bound(gimbal_pitch, -40, 20)
         self.ser.flush()
